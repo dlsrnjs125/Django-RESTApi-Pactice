@@ -16,8 +16,8 @@ urlpatterns = [
     path('author/<str:author>/', views.get_books_by_author, name='get_books_by_author'),
     # 출판사 이름으로 조회
     path('publisher/<str:publisher>', views.get_books_by_publisher, name='get_books_by_publisher'),
-    # 특정 가격 이의 책 조회
-    path('publisher/<str:publisher>/', views.get_books_by_publisher, name='get_books_by_publisher'),
     # 책 삭제
     path('delete/<int:id>/', views.delete_book_by_id, name='delete_book_by_id'),
+    # 주문 API 추가
+    path('order/<int:id>/', views.order_book, name='order_book'),
 ]

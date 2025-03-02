@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "book",
     "users",
     "orders",
+    'corsheaders', # CORS 오류
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -51,6 +52,7 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # CORS 오류
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,6 +60,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# CORS 3000포트에만 요청 허용
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+]
+
 
 ROOT_URLCONF = 'config.urls'
 
