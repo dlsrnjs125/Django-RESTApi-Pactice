@@ -58,26 +58,25 @@ def get_book_by_id(request, id):
    except Books.DoesNotExist:
        return Response(status=status.HTTP_404_NOT_FOUND)
 
-# 책 제목으로 조회
 @api_view(['GET'])
-def get_books_by_title(request, title):
-   books = Books.objects.filter(title=title)
-   serializer = BooksSerializer(books, many=True)
-   return Response(serializer.data, status=status.HTTP_200_OK)
+def search_books(request, search_field, search_value):
+    if search_field == 'title':
+        books = Books.objects.filter(title__icontains=search_value)  # 부분 검색 가능
+    elif search_field == 'author':
+        books = Books.objects.filter(author__icontains=search_value)
+    elif search_field == 'publisher':
+        books = Books.objects.filter(publisher__icontains=search_value)
+    elif search_field == 'price':
+        try:
+            price_value = int(search_value)
+            books = Books.objects.filter(price__gte=price_value)  # 가격 이상 검색
+        except ValueError:
+            return Response({"error": "Invalid price value"}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response({"error": "Invalid search field"}, status=status.HTTP_400_BAD_REQUEST)
 
-# 작가 이름으로 조회
-@api_view(['GET'])
-def get_books_by_author(request, author):
-   books = Books.objects.filter(author=author)
-   serializer = BooksSerializer(books, many=True)
-   return Response(serializer.data, status=status.HTTP_200_OK)
-
-# 출판사 이름으로 조회
-@api_view(['GET'])
-def get_books_by_publisher(request, publisher ):
-   books = Books.objects.filter(publisher=publisher)
-   serializer = BooksSerializer(books, many=True)
-   return Response(serializer.data, status=status.HTTP_200_OK)
+    serializer = BooksSerializer(books, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 # 책 삭제
 @api_view(['DELETE'])

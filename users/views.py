@@ -21,6 +21,24 @@ def create_user(request):
        return Response(serializer.data, status=status.HTTP_201_CREATED)
    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
+def search_users(request, search_field, search_value):
+    if search_field == 'name':
+        users = Users.objects.filter(name__icontains=search_value)  # 부분 검색 가능
+    elif search_field == 'email':
+        users = Users.objects.filter(email__icontains=search_value)
+    elif search_field == 'age':
+        try:
+            age_value = int(search_value)
+            users = Users.objects.filter(age__gte=age_value)  # 특정 나이 이상 검색
+        except ValueError:
+            return Response({"error": "Invalid age value"}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response({"error": "Invalid search field"}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = UsersSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 # ID로 사용자 조회
 @api_view(['GET'])
 def get_user_by_id(request, id):
@@ -30,20 +48,6 @@ def get_user_by_id(request, id):
        return Response(serializer.data, status=status.HTTP_200_OK)
    except Users.DoesNotExist:
        return Response(status=status.HTTP_404_NOT_FOUND)
-
-# 사용자 이름으로 조회
-@api_view(['GET'])
-def get_users_by_name(request, name):
-   users = Users.objects.filter(name=name)
-   serializer = UsersSerializer(users, many=True)
-   return Response(serializer.data, status=status.HTTP_200_OK)
-
-# 특정 나이 이상의 사용자 조회
-@api_view(['GET'])
-def get_users_by_age_gte(request, age):
-   users = Users.objects.filter(age__gte=age) # gte : 크거나 같다
-   serializer = UsersSerializer(users, many=True)
-   return Response(serializer.data, status=status.HTTP_200_OK)
 
 # 사용자 삭제
 @api_view(['DELETE'])
