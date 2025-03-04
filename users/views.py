@@ -21,6 +21,7 @@ def create_user(request):
        return Response(serializer.data, status=status.HTTP_201_CREATED)
    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# name, email, age(특정 나이 이상)으로 조회
 @api_view(['GET'])
 def search_users(request, search_field, search_value):
     if search_field == 'name':
