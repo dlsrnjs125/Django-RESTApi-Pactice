@@ -17,51 +17,43 @@ def get_all_orders(request):
 
 @api_view(['POST'])
 def create_order(request):
-    # 요청 데이터에서 user_id와 book_id를 받아오기
     user_id = request.data.get('user_id')
     book_id = request.data.get('book_id')
+    quantity = request.data.get('quantity', 1)  # 기본 수량 1
+    address = request.data.get('address')
 
-    if not user_id or not book_id:
-        return Response({"error": "User ID and Book ID are required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not user_id or not book_id or not address:
+        return Response({"error": "User ID, Book ID, and Address are required"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        # 사용자와 책을 가져오기
         user = get_object_or_404(Users, id=user_id)
         book = get_object_or_404(Books, id=book_id)
 
-        # 주소와 가격을 받기
-        address = request.data.get('address')
-        total_price = request.data.get('total_price')
+        quantity = max(1, int(quantity))  # 최소 1 이상 보장
+        total_price = book.price * quantity  # 총 가격 자동 계산
 
-        # 주소와 가격이 없으면 에러 반환
-        if not address or not total_price:
-            return Response({"error": "Address and Total Price are required"}, status=status.HTTP_400_BAD_REQUEST)
+        order = Orders.objects.create(user=user, book=book, address=address, quantity=quantity, total_price=total_price)
 
-        # 주문 생성
-        order = Orders.objects.create(user=user, book=book, address=address, total_price=total_price)
-
-        # 생성된 주문에 대한 응답 반환
         serializer = OrdersSerializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    except Users.DoesNotExist:
-        return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
-    except Books.DoesNotExist:
-        return Response({"error": "Book not found"}, status=status.HTTP_400_BAD_REQUEST)
+    except (Users.DoesNotExist, Books.DoesNotExist):
+        return Response({"error": "User or Book not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-
+# user_id, user_name, book_id, book_title 로 조회 가능하도록 수정
 @api_view(['GET'])
-def get_orders_by_user(request, user_id):
-    # 사용자의 주문 목록 조회
-    orders = Orders.objects.filter(user_id=user_id)
-    serializer = OrdersSerializer(orders, many=True)
-    return Response(serializer.data)
+def search_orders(request, search_field, search_value):
+    if search_field == "user_id":
+        orders = Orders.objects.filter(user__id=search_value)
+    elif search_field == "user_name":
+        orders = Orders.objects.filter(user__name__icontains=search_value)
+    elif search_field == "book_id":
+        orders = Orders.objects.filter(book__id=search_value)
+    elif search_field == "book_title":
+        orders = Orders.objects.filter(book__title__icontains=search_value)
+    else:
+        return Response({"error": "Invalid search field"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-@api_view(['GET'])
-def get_orders_by_book(request, book_id):
-    # 책의 주문 목록 조회
-    orders = Orders.objects.filter(book_id=book_id)
     serializer = OrdersSerializer(orders, many=True)
     return Response(serializer.data)
 
